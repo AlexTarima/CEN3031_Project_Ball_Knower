@@ -178,6 +178,8 @@ def import_matches():
                 tournament = clean(
                     row.get("tourney_name")
                 )
+                surface = clean(row.get("surface"))
+                valid_surfaces = {"Hard", "Clay", "Grass", "Carpet"}
 
                 # Skip rows with missing required data.
                 if (
@@ -188,6 +190,7 @@ def import_matches():
                     or not match_num
                     or not match_date
                     or not tournament
+                    or surface not in valid_surfaces
                 ):
                     total_skipped += 1
                     continue
@@ -204,9 +207,7 @@ def import_matches():
                     "source_match_id": source_match_id,
                     "tournament": tournament,
                     "match_date": match_date,
-                    "surface": clean(
-                        row.get("surface")
-                    ) or None,
+                    "surface": surface,
                     "round": clean(
                         row.get("round")
                     ) or None,
