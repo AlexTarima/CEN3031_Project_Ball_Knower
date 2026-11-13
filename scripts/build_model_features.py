@@ -1,12 +1,3 @@
-"""Rebuild Ball Knowers model features from the repo's ATP CSVs.
-
-Run after `scripts/import_atp.py` has loaded the same CSVs into Supabase.
-Requires `pip install supabase python-dotenv`.
-
-Reads SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY from scripts/.env,
-matching the existing importer. NEVER commit that .env file.
-"""
-
 import csv
 import os
 from collections import defaultdict
@@ -22,7 +13,7 @@ load_dotenv(BASE_DIR / ".env")
 
 K = 32.0
 INITIAL_ELO = 1500.0
-SURFACES = {"Hard", "Clay", "Grass", "Carpet"}
+SURFACES = {"Hard", "Clay", "Grass"}
 ROUND_ORDER = {
     "Q1": -3, "Q2": -2, "Q3": -1, "RR": 0, "R128": 1,
     "R64": 2, "R32": 3, "R16": 4, "QF": 5, "SF": 6, "F": 7,
@@ -41,7 +32,6 @@ def parse_int(value):
 
 
 def serve_counts(row, prefix):
-    """Return (service points won, service points played), or None."""
     total = parse_int(row.get(f"{prefix}_svpt"))
     first_in = parse_int(row.get(f"{prefix}_1stIn"))
     first_won = parse_int(row.get(f"{prefix}_1stWon"))
@@ -60,17 +50,11 @@ def elo_expected(a, b):
 
 
 def update_pair(rating_a, rating_b):
-    """Return new Elo ratings for a match A won over B."""
     delta = K * (1.0 - elo_expected(rating_a, rating_b))
     return rating_a + delta, rating_b - delta
 
 
 def load_matches():
-    """Deduplicate with the same source key as scripts/import_atp.py.
-
-    `tourney_date` is usually a tournament-start date, NOT the precise
-    match date. Sorting round within the tournament is only an approximation.
-    """
     unique = {}
     for path in sorted(DATA_DIR.glob("*.csv")):
         with path.open(encoding="utf-8-sig", newline="") as handle:
@@ -104,7 +88,6 @@ def load_matches():
 
 
 def get_player_id_map(supabase):
-    """Load every ATP -> DB ID; Supabase limits single queries to ~1,000."""
     result = {}
     offset = 0
     while True:
@@ -130,7 +113,6 @@ def fresh_state():
         "elo_hard": INITIAL_ELO,
         "elo_clay": INITIAL_ELO,
         "elo_grass": INITIAL_ELO,
-        "elo_carpet": INITIAL_ELO,
         "matches_played": 0,
         "serve_points_won": 0,
         "serve_points_total": 0,

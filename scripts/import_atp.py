@@ -179,7 +179,7 @@ def import_matches():
                     row.get("tourney_name")
                 )
                 surface = clean(row.get("surface"))
-                valid_surfaces = {"Hard", "Clay", "Grass", "Carpet"}
+                valid_surfaces = {"Hard", "Clay", "Grass"}
 
                 # Skip rows with missing required data.
                 if (

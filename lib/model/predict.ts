@@ -1,5 +1,4 @@
-/** Inference-only version of the five-feature Ball Knowers logistic model. */
-export type Surface = "All" | "Hard" | "Clay" | "Grass" | "Carpet";
+export type Surface = "All" | "Hard" | "Clay" | "Grass";
 
 export type PlayerModelFeatures = {
   player_id: number;
@@ -7,7 +6,6 @@ export type PlayerModelFeatures = {
   elo_hard: number;
   elo_clay: number;
   elo_grass: number;
-  elo_carpet: number;
   matches_played: number;
   serve_points_won: number;
   serve_points_total: number;
@@ -45,30 +43,22 @@ export type Prediction = {
 
 const INITIAL_ELO = 1500;
 const SURFACE_WEIGHT = 0.40;
-const PRIOR_POINTS = 20 * 81;  // 1,620 pseudo-points
+const PRIOR_POINTS = 20 * 81; 
 const SERVE_PRIOR = 0.642;
 const RETURN_PRIOR = 0.358;
 
 function effectiveElo(player: PlayerModelFeatures, surface: Surface): number {
   if (surface === "All") return player.elo_overall;
   const column = `elo_${surface.toLowerCase()}` as
-    | "elo_hard" | "elo_clay" | "elo_grass" | "elo_carpet";
-  // When surface history is absent, the precomputation stores INITIAL_ELO.
+    | "elo_hard" | "elo_clay" | "elo_grass";
   const surfaceElo = player[column] ?? INITIAL_ELO;
   return (1 - SURFACE_WEIGHT) * player.elo_overall + SURFACE_WEIGHT * surfaceElo;
 }
 
 function smoothedPercentage(won: number, total: number, prior: number): number {
-  // Return percentage POINTS, not a 0..1 fraction, as required by beta_s/r.
   return 100 * (won + PRIOR_POINTS * prior) / (total + PRIOR_POINTS);
 }
 
-/**
- * @param a Player A's frozen statistics (only pre-match historical results).
- * @param b Player B's frozen statistics.
- * @param aWins Number of previous matches won by A against B.
- * @param bWins Number of previous matches won by B against A.
- */
 export function predictMatch(
   a: PlayerModelFeatures,
   b: PlayerModelFeatures,
@@ -76,7 +66,6 @@ export function predictMatch(
   aWins: number,
   bWins: number,
 ): Prediction {
-  // Calculate the same values for inference AND the side-by-side display.
   const eloA = effectiveElo(a, surface);
   const eloB = effectiveElo(b, surface);
   const serveA = smoothedPercentage(a.serve_points_won, a.serve_points_total, SERVE_PRIOR);
@@ -97,16 +86,14 @@ export function predictMatch(
     0.134 * serveDifferencePP +
     0.138 * returnDifferencePP;
 
-  // Stable logistic, clamped only to avoid infinite decimal odds.
   const sigmoid = logit >= 0
     ? 1 / (1 + Math.exp(-logit))
     : Math.exp(logit) / (1 + Math.exp(logit));
   const probabilityA = Math.max(1e-9, Math.min(1 - 1e-9, sigmoid));
   const probabilityB = 1 - probabilityA;
 
-  // Display-only response fields. The logistic model above is unchanged.
   const surfaceEloColumn = surface === "All" ? null :
-    (`elo_${surface.toLowerCase()}` as "elo_hard" | "elo_clay" | "elo_grass" | "elo_carpet");
+    (`elo_${surface.toLowerCase()}` as "elo_hard" | "elo_clay" | "elo_grass");
 
   return {
     playerAStats: {

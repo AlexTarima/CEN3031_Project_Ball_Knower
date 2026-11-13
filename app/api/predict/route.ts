@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { predictMatch, type PlayerModelFeatures, type Surface } from "@/lib/model/predict";
 
-const SURFACES: Surface[] = ["All", "Hard", "Clay", "Grass", "Carpet"];
+const SURFACES: Surface[] = ["All", "Hard", "Clay", "Grass"];
 
 export async function POST(request: Request) {
   let body: unknown;

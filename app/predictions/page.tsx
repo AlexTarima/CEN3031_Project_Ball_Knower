@@ -220,7 +220,6 @@ export default function PredictionsPage() {
             <option value="Hard">Hard</option>
             <option value="Clay">Clay</option>
             <option value="Grass">Grass</option>
-            <option value="Carpet">Carpet</option>
             <option value="All">All surfaces</option>
           </select>
         </div>
