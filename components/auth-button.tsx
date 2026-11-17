@@ -13,7 +13,9 @@ export async function AuthButton() {
 
   return user ? (
     <div className="flex items-center gap-4">
-      Hey, {user.email}!
+        <Button asChild size="sm" variant="outline">
+            <Link href="/protected">Hey, {user.email}!</Link>
+        </Button>
       <LogoutButton />
     </div>
   ) : (

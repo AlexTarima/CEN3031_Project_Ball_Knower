@@ -1,43 +1,75 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-import { InfoIcon } from "lucide-react";
-import { FetchDataSteps } from "@/components/tutorial/fetch-data-steps";
-import { Suspense } from "react";
+import { Badge } from "@/components/ui/badge";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
 
-async function UserDetails() {
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getClaims();
-
-  if (error || !data?.claims) {
-    redirect("/auth/login");
-  }
-
-  return JSON.stringify(data.claims, null, 2);
+function formatTime(seconds?: number) {
+    if (!seconds) return "—";
+    return new Date(seconds * 1000).toLocaleString("en-US", {
+        dateStyle: "medium",
+        timeStyle: "short",
+    });
 }
 
-export default function ProtectedPage() {
-  return (
-    <div className="flex-1 w-full flex flex-col gap-12">
-      <div className="w-full">
-        <div className="bg-accent text-sm p-3 px-5 rounded-md text-foreground flex gap-3 items-center">
-          <InfoIcon size="16" strokeWidth={2} />
-          This is a protected page that you can only see as an authenticated
-          user
+export default async function DashboardPage() {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.getClaims();
+
+    if (error || !data?.claims) {
+        redirect("/auth/login");
+    }
+
+    const claims = data.claims;
+    const provider = (claims.app_metadata as { provider?: string } | undefined)
+        ?.provider;
+
+    const rows: { label: string; value: React.ReactNode }[] = [
+        { label: "Email", value: claims.email ?? "—" },
+        {
+            label: "User ID",
+            value: <span className="font-mono text-xs break-all">{claims.sub}</span>,
+        },
+        { label: "Role", value: <Badge variant="secondary">{claims.role}</Badge> },
+        { label: "Sign-in method", value: provider ?? "—" },
+        { label: "Signed in", value: formatTime(claims.iat) },
+        { label: "Session expires", value: formatTime(claims.exp) },
+    ];
+
+    return (
+        <div className="flex-1 w-full flex flex-col gap-8">
+            <div>
+                <h1 className="font-bold text-3xl">Dashboard</h1>
+                <p className="text-muted-foreground mt-1">
+                    Welcome back{claims.email ? `, ${claims.email}` : ""}.
+                </p>
+            </div>
+
+            <Card className="max-w-xl">
+                <CardHeader>
+                    <CardTitle>Account</CardTitle>
+                    <CardDescription>Your current account and session details.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <dl className="divide-y">
+                        {rows.map(({ label, value }) => (
+                            <div
+                                key={label}
+                                className="flex items-start justify-between gap-6 py-3 text-sm"
+                            >
+                                <dt className="text-muted-foreground shrink-0">{label}</dt>
+                                <dd className="text-right">{value}</dd>
+                            </div>
+                        ))}
+                    </dl>
+                </CardContent>
+            </Card>
         </div>
-      </div>
-      <div className="flex flex-col gap-2 items-start">
-        <h2 className="font-bold text-2xl mb-4">Your user details</h2>
-        <pre className="text-xs font-mono p-3 rounded border max-h-32 overflow-auto">
-          <Suspense>
-            <UserDetails />
-          </Suspense>
-        </pre>
-      </div>
-      <div>
-        <h2 className="font-bold text-2xl mb-4">Next steps</h2>
-        <FetchDataSteps />
-      </div>
-    </div>
-  );
+    );
 }
