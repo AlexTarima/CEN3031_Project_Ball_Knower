@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
@@ -18,7 +19,7 @@ function formatTime(seconds?: number) {
     });
 }
 
-export default async function DashboardPage() {
+async function DashboardContent() {
     const supabase = await createClient();
     const { data, error } = await supabase.auth.getClaims();
 
@@ -43,18 +44,17 @@ export default async function DashboardPage() {
     ];
 
     return (
-        <div className="flex-1 w-full flex flex-col gap-8">
-            <div>
-                <h1 className="font-bold text-3xl">Dashboard</h1>
-                <p className="text-muted-foreground mt-1">
-                    Welcome back{claims.email ? `, ${claims.email}` : ""}.
-                </p>
-            </div>
+        <>
+            <p className="text-muted-foreground mt-1">
+                Welcome back{claims.email ? `, ${claims.email}` : ""}.
+            </p>
 
-            <Card className="max-w-xl">
+            <Card className="max-w-xl mt-8">
                 <CardHeader>
                     <CardTitle>Account</CardTitle>
-                    <CardDescription>Your current account and session details.</CardDescription>
+                    <CardDescription>
+                        Your current account and session details.
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <dl className="divide-y">
@@ -70,6 +70,26 @@ export default async function DashboardPage() {
                     </dl>
                 </CardContent>
             </Card>
+        </>
+    );
+}
+
+function DashboardFallback() {
+    return (
+        <div className="mt-1 max-w-xl animate-pulse">
+            <div className="h-4 w-48 rounded bg-muted" />
+            <div className="mt-8 h-64 rounded-lg bg-muted" />
+        </div>
+    );
+}
+
+export default function DashboardPage() {
+    return (
+        <div className="flex-1 w-full flex flex-col">
+            <h1 className="font-bold text-3xl">Dashboard</h1>
+            <Suspense fallback={<DashboardFallback />}>
+                <DashboardContent />
+            </Suspense>
         </div>
     );
 }
